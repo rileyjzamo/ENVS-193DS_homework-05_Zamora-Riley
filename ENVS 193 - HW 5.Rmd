@@ -1,0 +1,148 @@
+---
+title: "ENVS 193 - HW 5"
+author: "Riley Zamora"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+# Introduction  
+
+
+# Methods  
+
+## Libraries  
+```{r, message = FALSE, warning=FALSE}
+library(tidyverse)
+library(here)
+library(janitor)
+library(ggeffects)
+library(performance)
+library(naniar) # or equivalent
+library(flextable) # or equivalent
+library(car)
+library(broom)
+# would be nice to have
+library(corrplot)
+library(AICcmodavg)
+library(GGally)
+```
+
+
+## Import data using here package  
+```{r}
+sar <- read.csv(here("hf109-01-sarracenia.csv")) %>% 
+  clean_names() %>% 
+  select(totmass, species, feedlevel, sla, chlorophyll, amass, num_lvs, num_phylls)
+```
+
+
+## Part A  
+
+## Part B  
+
+## Part C  
+
+### Visualize Missingness
+```{r}
+gg_miss_var(sar)
+```
+
+In this figure, we can see that chlorophyll, amass, sla, and num_lvs have missing data values. Chlorophyll and amass have over 10 missing, sla has 10 and num_phylls/num_lvs have less than 3 missing values. The rest of the variable have no missing data. 
+
+### Remove NA  
+```{r}
+# creating a dataset without the missing values
+sar_clean <- sar %>% 
+  drop_na(sla, chlorophyll, amass, num_lvs, num_phylls)
+```
+
+
+## Part D  
+
+### Visualize Correlation
+```{r}
+# calc Pearson's r for numerical values
+sar_corr <- sar_clean %>% 
+  select(feedlevel:num_phylls) %>% 
+  cor(method = "pearson")
+
+# plot correlation values
+corrplot(sar_corr,
+         method = "ellipse",
+         addCoef.col = "black")
+```
+
+The correlation figure illustrates the correlation values between various variables. A higher absolute value indicates a stronger correlation between the variables. For instance, the variables sla and amass exhibit the highest positive correlation, with a correlation coefficient of 0.32. Conversely, num_lvs and amass exhibit the strongest negative correlation, with a correlation coefficient of -0.31.  
+
+## Part E  
+
+```{r, message = FALSE}
+sar_clean %>% 
+  select(species:num_phylls) %>% 
+  ggpairs() 
+```
+
+## Part F  
+
+```{r}
+null <- lm(totmass ~ 1, data = sar_clean) # just beta_0
+full <- lm(totmass ~ species + feedlevel + # all predictors
+             sla + chlorophyll + amass + 
+             num_lvs + num_phylls, 
+           data = sar_clean)
+```
+
+The null model only includes the intercept and response, `totmass`. The full model has all predictors in the dataset and the response as `totmass`.  
+
+## Part G  
+```{r}
+par(mfrow = c(2, 2)) # facet the plots
+plot(full) # will show diagnostic plots
+```
+
+```{r, warning = FALSE, message=FALSE}
+# statistical diagnostics
+check_normality(full) 
+```
+We get that "Non-normality of residuals detected (p < .001)." which means that we have to perform some transformations.
+
+```{r, warning = FALSE, message = FALSE}
+check_heteroscedasticity(full)
+```
+we get that "Heteroscedasticity (non-constant error variance) detected (p < .001)." more reason to perform a log transformation.  
+
+### Log transform
+```{r}
+# creating log transformed models
+null_log <- lm(log(totmass) ~ 1, data = sar_clean)
+full_log <- lm(log(totmass) ~ species + feedlevel + 
+                 sla + chlorophyll + amass + num_lvs + 
+                 num_phylls, 
+               data = sar_clean)
+```
+
+# Results  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
