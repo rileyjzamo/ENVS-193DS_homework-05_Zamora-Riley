@@ -18,7 +18,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Methods  
 
-## Libraries  
+### Libraries  
 ```{r, message = FALSE, warning=FALSE}
 library(tidyverse)
 library(here)
@@ -36,9 +36,9 @@ library(GGally)
 ```
 
 
-## Import data using here package  
+### Import data using here package  
 ```{r}
-sar <- read.csv(here("hf109-01-sarracenia.csv")) %>% 
+plant <- read.csv(here("hf109-01-sarracenia.csv")) %>% 
   clean_names() %>% 
   select(totmass, species, feedlevel, sla, chlorophyll, amass, num_lvs, num_phylls)
 ```
@@ -52,7 +52,7 @@ sar <- read.csv(here("hf109-01-sarracenia.csv")) %>%
 
 ### Visualize Missingness
 ```{r}
-gg_miss_var(sar)
+gg_miss_var(plant)
 ```
 
 In this figure, we can see that chlorophyll, amass, sla, and num_lvs have missing data values. Chlorophyll and amass have over 10 missing, sla has 10 and num_phylls/num_lvs have less than 3 missing values. The rest of the variable have no missing data. 
@@ -60,7 +60,7 @@ In this figure, we can see that chlorophyll, amass, sla, and num_lvs have missin
 ### Remove NA  
 ```{r}
 # creating a dataset without the missing values
-sar_clean <- sar %>% 
+plant_clean <- plant %>% 
   drop_na(sla, chlorophyll, amass, num_lvs, num_phylls)
 ```
 
@@ -70,12 +70,12 @@ sar_clean <- sar %>%
 ### Visualize Correlation
 ```{r}
 # calc Pearson's r for numerical values
-sar_corr <- sar_clean %>% 
+plant_corr <- plant_clean %>% 
   select(feedlevel:num_phylls) %>% 
   cor(method = "pearson")
 
 # plot correlation values
-corrplot(sar_corr,
+corrplot(plant_corr,
          method = "ellipse",
          addCoef.col = "black")
 ```
@@ -85,19 +85,20 @@ The correlation figure illustrates the correlation values between various variab
 ## Part E  
 
 ```{r, message = FALSE}
-sar_clean %>% 
+plant_clean %>% 
   select(species:num_phylls) %>% 
   ggpairs() 
 ```
 
 ## Part F  
 
+### Fitting Models
 ```{r}
-null <- lm(totmass ~ 1, data = sar_clean) # just beta_0
+null <- lm(totmass ~ 1, data = plant_clean) # just beta_0
 full <- lm(totmass ~ species + feedlevel + # all predictors
              sla + chlorophyll + amass + 
              num_lvs + num_phylls, 
-           data = sar_clean)
+           data = plant_clean)
 ```
 
 The null model only includes the intercept and response, `totmass`. The full model has all predictors in the dataset and the response as `totmass`.  
@@ -119,15 +120,32 @@ check_heteroscedasticity(full)
 ```
 we get that "Heteroscedasticity (non-constant error variance) detected (p < .001)." more reason to perform a log transformation.  
 
-### Log transform
+# Part H  
+
+### Fitting Log transform models  
+
+I am going to perform a log transformation to the data to try and achieve normality and constant variance.  
 ```{r}
 # creating log transformed models
-null_log <- lm(log(totmass) ~ 1, data = sar_clean)
+null_log <- lm(log(totmass) ~ 1, data = plant_clean)
 full_log <- lm(log(totmass) ~ species + feedlevel + 
                  sla + chlorophyll + amass + num_lvs + 
                  num_phylls, 
-               data = sar_clean)
+               data = plant_clean)
 ```
+
+
+### diagnostic checking  
+
+```{r}
+check_normality(full_log) 
+```
+Our data is normal after the log transofrm.
+
+```{r}
+check_heteroscedasticity(full_log)
+```
+We have constant variance after the log transform! We will continue using the log model.
 
 # Results  
 
