@@ -18,6 +18,10 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Introduction  
 
+Sarracenia are a genus of carnivorous plants commonly known as pitcher plants. They are native to North America and are characterized by their pitcher-shaped leaves that trap and digest insects. There are multiple reasons why people may find Sarracenia interesting. For one, they have fascinating ways of catching and eating insect, which makes scientists very interested in studying them. Moreover, they fulfill significant ecological functions as insectivorous plants, aiding in insect regulation and nutrient recycling within their ecosystems. Additionally, Sarracenia's unique pitcher shape and colors make them popular among plant enthusiasts.  
+Predicting individual biomass from morphological, physiological, or taxonomic characteristics provides researchers with valuable insights. It enables them to estimate plant growth and productivity, gain understanding of ecological interactions and responses to environmental changes, and evaluate the impact of plants on ecosystem functioning. Biomass prediction has practical applications in fields like agriculture and forestry, where it aids in decision-making regarding crop yield, and more.  
+We will be addressing how some independent variables can predict the total mass of our plant data. We will be checking the assumptions tied to multiple linear regression as well as finding the best predictors for total mass. Our main hypothesis is if our predictor variables are significant in predicting total mass.
+
 
 # Methods  
 
@@ -203,7 +207,7 @@ Here we can see that model3 still passes our diagnostic checks, and from stepwis
 To perform some model comparison, we will create a table consisting of all models AIC.  
 
 ```{r}
-MuMIn::AICc(full, null, logfull, lognull, model2, model3)
+MuMIn::AICc(full, null, logfull, lognull, model2, model3) # this shows the aic for every model I have worked with so far
 ```
 
 Again, we see that model3 has the lowest AIC and is the most simple model. This is ideal for predicting as a more complicated model can have adverse affects on the outcome of our predictions.  
@@ -228,15 +232,27 @@ table1
 
 ## Part B  
 
+By fitting this linear regression model, we can estimate the relationship between the response variable (log of totmass) and the predictors (species, feedlevel, sla, chlorophyll, and num_lvs). The coefficients obtained from the model can provide information about the direction and magnitude of the relationships. Additionally, we can assess the overall goodness of fit of the model and evaluate the significance of the predictors through statistical tests like the AIC.  
 
 ## Part C 
 
+#### Visualize model predictions  
+```{r, message=FALSE, warning=FALSE}
+# Calculate predictions based on model3  for the variable 'species'
+model_pred <- ggpredict(model3, terms = "num_lvs", back.transform = TRUE) 
+
+# Plot the predicted values from model_pred along with the original data points
+plot(model_pred, add.data = TRUE)
+```
+Here we can see that for the predicted data points (black line), that as num levels increases, so does the total mass. It is noteworthy that as we get higher into our num levels our prediction interval get much wider. This means that we have less certainty for our predictions as num levels increases. Intuitively this makes sense because, looking at our actual data, there is less information around higher levels. We can see where our model predicts and where the actual values sit but this is a part of linear regression and finding an estimation for the data.
+
 ## Part D  
+ Biologically, this model means that we can predict the total mass of plants from different independent variables. In our case with model3 we have chosen what seems to be the best combination of predictor variables. This is exciting because it allows us to, in a sense, predict future outcomes of plant data (or any data we use). 
 
 
 # Bibliography  
 
-
+insert citations here.
 
 
 
