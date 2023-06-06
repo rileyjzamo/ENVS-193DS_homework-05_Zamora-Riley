@@ -5,6 +5,9 @@ date: "`r Sys.Date()`"
 output:
   html_document:
     code_folding: hide
+    theme: readable
+    toc: true
+    toc_float: true
 ---
 
 ```{r setup, include=FALSE}
@@ -18,7 +21,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Methods  
 
-### Libraries  
+#### Libraries  
 ```{r, message = FALSE, warning=FALSE}
 library(tidyverse)
 library(here)
@@ -36,28 +39,31 @@ library(GGally)
 ```
 
 
-### Import data using here package  
+#### Import data using here package  
+
 ```{r}
 plant <- read.csv(here("hf109-01-sarracenia.csv")) %>% 
   clean_names() %>% 
-  select(totmass, species, feedlevel, sla, chlorophyll, amass, num_lvs, num_phylls)
+  select(totmass, species, feedlevel, sla, chlorophyll, amass, num_lvs, num_phylls) %>% 
+  mutate(species = factor(species))
 ```
 
 
 ## Part A  
+write and introduction here
 
 ## Part B  
+write some other stuff here
 
 ## Part C  
-
-### Visualize Missingness
+#### Visualize Missingness
 ```{r}
 gg_miss_var(plant)
 ```
 
 In this figure, we can see that chlorophyll, amass, sla, and num_lvs have missing data values. Chlorophyll and amass have over 10 missing, sla has 10 and num_phylls/num_lvs have less than 3 missing values. The rest of the variable have no missing data. 
 
-### Remove NA  
+#### Remove NA  
 ```{r}
 # creating a dataset without the missing values
 plant_clean <- plant %>% 
@@ -65,9 +71,9 @@ plant_clean <- plant %>%
 ```
 
 
-## Part D  
 
-### Visualize Correlation
+## Part D  
+#### Visualize Correlation
 ```{r}
 # calc Pearson's r for numerical values
 plant_corr <- plant_clean %>% 
@@ -83,7 +89,6 @@ corrplot(plant_corr,
 The correlation figure illustrates the correlation values between various variables. A higher absolute value indicates a stronger correlation between the variables. For instance, the variables sla and amass exhibit the highest positive correlation, with a correlation coefficient of 0.32. Conversely, num_lvs and amass exhibit the strongest negative correlation, with a correlation coefficient of -0.31.  
 
 ## Part E  
-
 ```{r, message = FALSE}
 plant_clean %>% 
   select(species:num_phylls) %>% 
@@ -92,7 +97,7 @@ plant_clean %>%
 
 ## Part F  
 
-### Fitting Models
+#### Fitting Models
 ```{r}
 null <- lm(totmass ~ 1, data = plant_clean) # just beta_0
 full <- lm(totmass ~ species + feedlevel + # all predictors
@@ -120,37 +125,116 @@ check_heteroscedasticity(full)
 ```
 we get that "Heteroscedasticity (non-constant error variance) detected (p < .001)." more reason to perform a log transformation.  
 
-# Part H  
+## Part H  
 
-### Fitting Log transform models  
+#### Fitting Log transform models  
 
 I am going to perform a log transformation to the data to try and achieve normality and constant variance.  
 ```{r}
 # creating log transformed models
-null_log <- lm(log(totmass) ~ 1, data = plant_clean)
-full_log <- lm(log(totmass) ~ species + feedlevel + 
+lognull <- lm(log(totmass) ~ 1, data = plant_clean)
+logfull <- lm(log(totmass) ~ species + feedlevel + 
                  sla + chlorophyll + amass + num_lvs + 
                  num_phylls, 
                data = plant_clean)
 ```
 
 
-### diagnostic checking  
+#### diagnostic checking  
 
 ```{r}
-check_normality(full_log) 
+check_normality(logfull) 
 ```
 Our data is normal after the log transofrm.
 
 ```{r}
-check_heteroscedasticity(full_log)
+check_heteroscedasticity(logfull)
 ```
 We have constant variance after the log transform! We will continue using the log model.
 
+## Part I  
+#### Model construction using stepwise selection
+
+Step wise selection is a way to select a model by testing the AIC of different predictor variations. Here we are using backward selection and starting with the full log-model. 
+```{r}
+step(logfull, direction = 'backward')
+```
+
+#### Running diagnostics on the models proposed  
+model 1 is our full log model and we have already ran diagnostics on that model so I am going to skip to the next model.
+
+#### Model 2  
+```{r}
+model2 <- lm(log(totmass) ~ species + feedlevel + sla + chlorophyll +
+               amass + num_lvs, data = plant_clean)
+# plotting model2 diagnostics
+par(mfrow = c(2, 2))
+plot(model2)
+```
+
+```{r}
+check_normality(model2)
+check_heteroscedasticity(model2)
+```
+We know from backward stepwise section that this is not our best performing model. However, it passes our diagnostic checks!
+
+#### Model 3  
+
+```{r}
+model3 <- lm(log(totmass) ~ species + feedlevel + sla +
+               chlorophyll + num_lvs, data = plant_clean)
+
+# plotting model3 diagnostics
+par(mfrow = c(2, 2))
+plot(model3)
+```
+
+```{r}
+check_normality(model3)
+check_heteroscedasticity(model3)
+```
+
+Here we can see that model3 still passes our diagnostic checks, and from stepwise AIC we know that this model out performs model 2. We know that using backwards stepwise selection with the `step()` function automatically stops when the model AIC increases. Thus model 3 is the best choice for predicting with.
+
+
+## Part K  
+
+#### Model Comparison  
+To perform some model comparison, we will create a table consisting of all models AIC.  
+
+```{r}
+MuMIn::AICc(full, null, logfull, lognull, model2, model3)
+```
+
+Again, we see that model3 has the lowest AIC and is the most simple model. This is ideal for predicting as a more complicated model can have adverse affects on the outcome of our predictions.  
+
 # Results  
 
+## Part A  
+
+Model 3 consists of the predictor variables species, feedlevel, sla, chlorophyll, num_lvs and a response variable log(totmass). I chose this model using the stat function `step()` with direction set to backwards. This automatically checks the AIC and stops when it has reached the best model. I double checked the diagnostics for each model that the step function went thorough to be extra careful. 
+
+#### Summary of model results  
+```{r}
+table1 <- tidy(model3, conf.int = TRUE, exponentiate = TRUE) %>% 
+  # make it into a flextable
+  flextable() %>% 
+  # fit it to the viewer
+  autofit()
+
+table1
+```
 
 
+## Part B  
+
+
+## Part C 
+
+## Part D  
+
+
+# Bibliography  
 
 
 
