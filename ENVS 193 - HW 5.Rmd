@@ -26,6 +26,8 @@ We will be addressing how some independent variables can predict the total mass 
 # Methods  
 
 #### Libraries  
+
+These libraries are used throughout the assignment. I emphasize the use of tidyverse.
 ```{r, message = FALSE, warning=FALSE}
 library(tidyverse)
 library(here)
@@ -45,6 +47,8 @@ library(GGally)
 
 #### Import data using here package  
 
+Using the `here` package for data reading allows anyone to run this .rmd if they have previously downloaded the dataset .csv file. It grabs the path to the downloaded file from your computer and reads it in.
+
 ```{r}
 plant <- read.csv(here("hf109-01-sarracenia.csv")) %>% 
   clean_names() %>% 
@@ -54,10 +58,13 @@ plant <- read.csv(here("hf109-01-sarracenia.csv")) %>%
 
 
 ## Part A  
-write and introduction here
+#### Where the data came from  
+This data was collected in a "manipulative feeding experiment to test whether morphological and physiological allometric relationships of carnivorous plants when nutrients are not limiting are more similar to allometric relationships of non-carnivorous plants." The researchers examined a feeding experiment to study the effects of prey availability on the characteristics of carnivorous plants, specifically pitcher plant species. The experiment involved measuring various parameters such as photosynthetic rate, chlorophyll content, growth, plant architecture, and nutrient content of the plants' leaves. The goal of the sampling methods was to test "... the hypothesis that increased prey availability would stimulate Amass of one or more leaves, increase photosynthetic N- and P-use efficiencies (PNUEN, PNUEP), increase relative biomass allocation to photosynthetically efficient, non-predatory phyllodes rather than pitchers, increase overall plant biomass, and reduce stress-related chlorophyll fluorescence."
+
 
 ## Part B  
-write some other stuff here
+#### Organization
+For data organization, we start by choosing our response (totmass), and our predictor variables (species, feedlevel, sla, chlorophyll, amass, num_lvs, num_phylls). We then want to make sure that they are easy to call and acess so we clean the names. This removes spaces, adds underscores, and lowercase all characters. Finally we need to make sure that our variables are in the correct format. I mutated species to be a factor, although I belive it might have already been a factor. 
 
 ## Part C  
 #### Visualize Missingness
@@ -252,10 +259,9 @@ Here we can see that for the predicted data points (black line), that as num lev
 
 # Bibliography  
 
-insert citations here.
+ - Check out my [github!](https://github.com/rileyjzamo/ENVS-193DS_homework-05_Zamora-Riley/tree/main)
 
-
-
+ - Find this data [at this website](https://portal.edirepository.org/nis/mapbrowse?packageid=knb-lter-hfr.109.18)
 
 
 
